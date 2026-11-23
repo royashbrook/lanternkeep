@@ -1,6 +1,10 @@
 # architecture note
 
-**stage:** prototype, 0.x. working name only, local only, not published.
+**stage:** prototype, 0.x. live at https://lanternkeep.royashbrook.com.
+
+**sharing:** none yet, on purpose. the campaign is one hand-authored world, and its seed only varies
+battle rolls, so there is no board to share and the share-a-seed rule does not apply. a save code
+moves a game between devices.
 
 **shell profile:** puzzle / casual game. the title screen has one primary action. during play a
 compact menu button replaces bottom navigation. orientation is `any`, with layouts for portrait and

@@ -17,7 +17,7 @@ test("the page and the about sheet carry the house ethos, word for word", async 
   await page.goto("/");
   await expect(page.locator("meta[name=description]")).toHaveAttribute("content", new RegExp(ETHOS.replaceAll(".", "\\.")));
   await page.locator("#about").click();
-  await expect(page.locator(".sheet-title")).toHaveText("lanternkeep");
+  await expect(page.locator(".sheet-title")).toHaveText("Lantern Keep");
   await expect(page.locator(".ethos")).toHaveText(ETHOS);
   await expect(page.locator(".maker")).toContainText("made with love by");
 });

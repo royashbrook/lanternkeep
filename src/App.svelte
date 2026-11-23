@@ -206,7 +206,7 @@
   <main class="title">
     <Scenery variant="title" />
     <div class="titlelantern"><Lantern lit big /></div>
-    <h1 class="wordmark">lanternkeep</h1>
+    <h1 class="wordmark">Lantern Keep</h1>
     <p class="tagline">The gloom blew out the lanterns. Go light them again!</p>
     <div class="titlecast" aria-hidden="true">
       <span><Figure kind="rider" /></span><span><Figure kind="knight" /></span><span><Figure kind="mage" /></span><span class="gl"><Figure kind="puff" foe /></span>
@@ -266,7 +266,7 @@
 
 {#if sheet === "about"}
   <Sheet label="about" onClose={() => (sheet = "")}>
-    <h2 class="sheet-title">lanternkeep</h2>
+    <h2 class="sheet-title">Lantern Keep</h2>
     <p>A little paper band walks from town to town and lights the lanterns the gloom blew out. You set them up, then watch them go.</p>
     <div class="sheetbtns">
       <button id="music" class="secondary" role="switch" aria-checked={music} onclick={() => setSound({ music: !music, sfx })}>Music: {music ? "on" : "off"}</button>
@@ -343,7 +343,7 @@
   </Sheet>
 {:else if sheet === "ios"}
   <Sheet label="install" onClose={() => (sheet = "")}>
-    <h2 class="sheet-title">Install lanternkeep</h2>
+    <h2 class="sheet-title">Install Lantern Keep</h2>
     <p>In Safari, tap the <b>share</b> button, then <b>Add to Home Screen</b>.</p>
     <button id="close" class="primary" onclick={() => (sheet = "")}>Back</button>
   </Sheet>

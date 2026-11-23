@@ -57,5 +57,5 @@ if (completeWorker.includes("__SHELL_ASSETS__"))
   throw Error("Worker precache substitution failed");
 await writeFile("dist/sw.js", completeWorker);
 console.log(
-  `Built lanternkeep ${identity.version} / ${id}; ${assets.length} precached paths`,
+  `Built Lantern Keep ${identity.version} / ${id}; ${assets.length} precached paths`,
 );
