@@ -88,9 +88,16 @@ test("the game makes its sound through the silent output", async ({ page }) => {
   expect(q.loud).toBe(0);
 });
 
-test("no cookies, and every request stays on this origin", async ({ page, context }) => {
+// the host adds its cookieless page-speed beacon on the live site. the house standard allows that one
+// service, so its two hosts are the only ones a request may go to besides this origin
+const BEACON = new Set(["static.cloudflareinsights.com", "cloudflareinsights.com"]);
+
+test("no cookies, and every request stays on this origin or the allowed beacon", async ({ page, context }) => {
   const away = [];
-  page.on("request", (r) => { if (!r.url().startsWith(new URL(page.url() === "about:blank" ? r.url() : page.url()).origin) && !r.url().startsWith("data:")) away.push(r.url()); });
+  page.on("request", (r) => {
+    if (r.url().startsWith("data:") || BEACON.has(new URL(r.url()).hostname)) return;
+    if (!r.url().startsWith(new URL(page.url() === "about:blank" ? r.url() : page.url()).origin)) away.push(r.url());
+  });
   await page.goto("/");
   await page.locator("#play").click();
   await page.locator('[data-place="pebble"]').click();
