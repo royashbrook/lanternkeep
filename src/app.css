@@ -98,7 +98,8 @@ html, body {
 h1, h2, h3, p { margin: 0; }
 h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.15; }
 svg { display: block; }
-textarea { user-select: text; -webkit-user-select: text; }
+/* the page turns off long-press menus for play, but a save code has to be copied and pasted */
+textarea { user-select: text; -webkit-user-select: text; -webkit-touch-callout: default; }
 
 button {
   min-height: 44px;
@@ -513,8 +514,10 @@ button svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke
   color: var(--ink);
   box-shadow: var(--shadow);
   text-align: center;
-  animation: popin 0.34s cubic-bezier(.2, 1.5, .4, 1);
+  animation: fadein 0.2s ease;
 }
+/* the words pop in; the button only fades, so a quick tap always lands on it */
+.resultcard > :not(button) { animation: popin 0.34s cubic-bezier(.2, 1.5, .4, 1); }
 .resultcard h2 { font-size: clamp(1.5rem, 4.6dvh, 2.3rem); color: var(--plum); }
 .result.won .resultcard h2 { color: var(--coin-edge); }
 .spoils { display: flex; gap: 16px; font-weight: 700; flex-wrap: wrap; justify-content: center; }
@@ -550,8 +553,9 @@ button svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke
   gap: clamp(5px, 1.6dvh, 14px);
   max-width: 500px;
   text-align: center;
-  animation: popin 0.5s cubic-bezier(.2, 1.4, .4, 1) 0.28s backwards;
 }
+.momentbody > :not(button) { animation: popin 0.5s cubic-bezier(.2, 1.4, .4, 1) 0.28s backwards; }
+.momentbody > button { animation: fadein 0.3s ease 0.28s backwards; }
 .momentbody h2 { font-size: clamp(1.6rem, 5.4dvh, 3rem); color: var(--glow); text-shadow: var(--text-cut); }
 .momentbody p { font-size: clamp(1rem, 2.5dvh, 1.3rem); color: var(--night-ink); }
 .momentbody p b { color: var(--coin); }

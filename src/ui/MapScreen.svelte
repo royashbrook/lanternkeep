@@ -36,8 +36,8 @@
   const hint = $derived.by(() => {
     if (!hasFolk(band)) return "This band is empty. Add friends in Camp.";
     if (game.turn === 1) return game.bands.some((b) => b.to) ? "Tap Go when you are ready." : "Tap a glowing town to walk there.";
-    if (game.turn === 2) return "Purple arrows show where the gloom will walk.";
     if (game.turn === 3 && game.coins >= 35) return "You have coins! Open Camp to get new friends.";
+    if (game.gloom.some((b) => b.to)) return "Purple arrows show where the gloom will walk.";
     return "";
   });
 

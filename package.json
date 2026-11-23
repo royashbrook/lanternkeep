@@ -22,7 +22,8 @@
     "@types/node": "22.19.19",
     "svelte-check": "4.7.3",
     "typescript": "6.0.3",
-    "vite": "8.1.5"
+    "vite": "8.1.5",
+    "wrangler": "4.158.0"
   },
   "dependencies": {
     "svelte": "5.56.8"

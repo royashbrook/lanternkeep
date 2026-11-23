@@ -105,6 +105,49 @@ test("turning the tablet in the middle of a battle keeps the battle and the game
   await expect(page.locator(".resultcard")).toBeVisible();
 });
 
+// a tap on a button that is still growing into place can land beside it, so the ok buttons never move
+const moving = (page, selector) =>
+  page.evaluate((s) => {
+    const out = [];
+    for (let el = document.querySelector(s); el; el = el.parentElement)
+      for (const a of el.getAnimations())
+        if (a.effect.getKeyframes().some((k) => k.transform && k.transform !== "none")) out.push(a.animationName);
+    return out;
+  }, selector);
+
+test("the Hooray button holds still while the good news pops in", async ({ page }) => {
+  await seed(page, null);
+  await page.goto("/");
+  await page.locator("#play").click();
+  await page.locator('[data-place="pebble"]').click();
+  await page.locator("#go").click();
+  await page.locator("#moment-ok").waitFor({ state: "attached" });
+  expect(await moving(page, "#moment-ok")).toEqual([]);
+  await page.locator("#moment-ok").click();
+  await expect(page.locator("#moment-ok")).toHaveCount(0);
+});
+
+test("the battle's ok button holds still while the result pops in", async ({ page }) => {
+  await seed(page, fight());
+  await page.goto("/");
+  await page.locator("#play").click();
+  await page.locator("#skip").click();
+  await page.locator("#battle-ok").waitFor({ state: "attached" });
+  expect(await moving(page, "#battle-ok")).toEqual([]);
+});
+
+test("the map only talks about purple arrows when there are some", async ({ page }) => {
+  await seed(page, null);
+  await page.goto("/");
+  await page.locator("#play").click();
+  await page.locator('[data-place="pebble"]').click();
+  await page.locator("#go").click();
+  await page.locator("#moment-ok").click();
+  await expect.poll(async () => (await state(page)).turn).toBe(2);
+  expect((await state(page)).gloom.some((b) => b.to)).toBe(false);
+  await expect(page.getByText("Purple arrows")).toHaveCount(0);
+});
+
 test("turning the tablet on the map keeps the plan and redraws the board", async ({ page }) => {
   await seed(page, null);
   await page.setViewportSize(SIZES["ipad landscape"]);

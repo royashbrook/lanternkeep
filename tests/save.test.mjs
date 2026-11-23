@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { emberdale as pack } from "../src/content/emberdale.ts";
-import { currentBattle, endTurn, finishBattle, newGame, planMove } from "../src/engine/campaign.ts";
+import { MAX_FIGHTERS, currentBattle, endTurn, finishBattle, movesFor, newGame, offers, planMove, recruit } from "../src/engine/campaign.ts";
 import { checkGame, fromCode, fromSave, toCode, toSave } from "../src/engine/save.ts";
 
 const midBattle = () => endTurn(pack, planMove(pack, newGame(pack, 11), 1, "mill"));
@@ -70,6 +70,64 @@ test("a save with broken numbers is refused", () => {
     "no stats": (r) => delete r.stats,
   };
   for (const [name, edit] of Object.entries(cases)) assert.equal(broken(edit), null, name);
+});
+
+test("a save code cannot smuggle in a game that would crash or break the rules", () => {
+  const cases = {
+    "a sleepy count past the limit": (r) => (r.gloom[0].yawns = 1_000_000_000),
+    "a class that is really an object method": (r) => Object.assign(r.fighters[0], { cls: "constructor", plan: [] }),
+    "a class called __proto__": (r) => Object.assign(r.fighters[0], { cls: "__proto__", plan: [] }),
+    "a class called toString": (r) => Object.assign(r.fighters[0], { cls: "toString", plan: [] }),
+    "gear that is really an object method": (r) => (r.fighters[0].gear = "constructor"),
+    "a gloomling that is really an object method": (r) => (r.gloom[0].units[0].foe = "toString"),
+    "a band on the locked keep": (r) => Object.assign(r.bands[0], { at: pack.goal, to: null }),
+    "a band over its size": (r) => {
+      r.bands[0].slots = [1, 2, 3, 4, null, null];
+      r.bands[1].slots = [5, 6, null, null, null, null];
+    },
+    "a band the lanterns have not earned": (r) => r.bands.push({ ...r.bands[0], id: 3, slots: [null, null, null, null, null, null] }),
+    "two gloom bands in one place": (r) => Object.assign(r.gloom[1], { at: r.gloom[0].at, to: null }),
+    "thousands of fighters": (r) => {
+      r.fighters = Array.from({ length: 20_000 }, (_, i) => ({ ...r.fighters[0], id: i + 1 }));
+      r.nextId = 20_001;
+    },
+  };
+  for (const [name, edit] of Object.entries(cases)) assert.equal(broken(edit), null, name);
+  assert.equal(fromCode(pack, `LK1.${"A".repeat(200_000)}.abc`), null, "a wall of text");
+});
+
+test("every real game stays a readable save, all the way to the win", () => {
+  let wins = 0;
+  for (let seed = 1; seed <= 60; seed++) {
+    let g = newGame(pack, seed), r = seed * 7919;
+    const roll = (n) => ((r = (Math.imul(r, 48271) + 11) >>> 0) >>> 8) % n;
+    // every fifth game is rich, so it hires right up to the limit
+    if (seed % 5 === 0) g = { ...g, coins: 1_000_000 };
+    for (let step = 0; step < 900 && g.phase !== "won"; step++) {
+      assert.ok(fromSave(pack, toSave(g)), `seed ${seed} step ${step}`);
+      if (g.phase === "battle") {
+        g = { ...finishBattle(pack, g), news: [] };
+        continue;
+      }
+      const on = offers(pack, g);
+      for (let i = 0; on.length && i < (seed % 5 === 0 ? 8 : 1); i++) g = recruit(pack, g, on[roll(on.length)]);
+      for (const b of g.bands) {
+        const moves = movesFor(pack, g, b.id);
+        if (moves.length) g = planMove(pack, g, b.id, moves[roll(moves.length)]);
+      }
+      g = { ...endTurn(pack, g), news: [] };
+    }
+    assert.ok(g.fighters.length <= MAX_FIGHTERS + pack.gloom.filter((d) => d.captain).length, `seed ${seed} roster`);
+    assert.ok(fromSave(pack, toSave(g)), `seed ${seed} at the end`);
+    if (g.phase === "won") wins++;
+  }
+  assert.ok(wins > 0, "some of these games really reached the win");
+});
+
+test("the camp stops hiring when it is full", () => {
+  let g = { ...newGame(pack, 3), coins: 10_000_000, lit: [pack.home, "pebble"] };
+  for (let i = 0; i < MAX_FIGHTERS + 5; i++) g = recruit(pack, g, "archer");
+  assert.equal(g.fighters.length, MAX_FIGHTERS);
 });
 
 test("a queued battle has to be a real meeting", () => {

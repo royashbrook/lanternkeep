@@ -1,6 +1,6 @@
 <script lang="ts">
   import { statsOf } from "../engine/battle.ts";
-  import { buyGear, hireCost, MAX_PLAN, maxSize, offers, placeFighter, recruit, resetPlan, setPlan, xpNeeded, MAX_LEVEL } from "../engine/campaign.ts";
+  import { buyGear, hireCost, MAX_FIGHTERS, MAX_PLAN, maxSize, offers, placeFighter, recruit, resetPlan, setPlan, xpNeeded, MAX_LEVEL } from "../engine/campaign.ts";
   import type { Fighter, Game, Pack } from "../engine/types.ts";
   import type { Sound } from "../lib/sound.ts";
   import Badge from "./Badge.svelte";
@@ -200,7 +200,7 @@
         </div>
       {/if}
     {:else if tab === "hire"}
-      <p class="lead" role="status">{hired || "Every town you light has someone who wants to help."}</p>
+      <p class="lead" role="status">{game.fighters.length >= MAX_FIGHTERS ? "Your camp is full of friends!" : hired || "Every town you light has someone who wants to help."}</p>
       <div class="hiregrid">
         {#each offers(pack, game) as cls (cls)}
           {@const c = pack.classes[cls]}
@@ -209,7 +209,7 @@
             <span class="hirefig"><Figure kind={cls} /></span>
             <h2><Badge cls={cls} />{cap(c.name)}</h2>
             <p>{cap(c.blurb)}.</p>
-            <button class="primary" data-hire={cls} disabled={game.coins < cost} aria-label={`hire a ${c.name} for ${cost} coins`} onclick={() => hire(cls)}>
+            <button class="primary" data-hire={cls} disabled={game.coins < cost || game.fighters.length >= MAX_FIGHTERS} aria-label={`hire a ${c.name} for ${cost} coins`} onclick={() => hire(cls)}>
               Hire for {cost}
             </button>
           </article>

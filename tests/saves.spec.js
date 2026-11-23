@@ -23,6 +23,19 @@ test("an unreadable save is kept, and a new game does not write over it", async 
   expect(now.v).toBe(1);
 });
 
+test("the unreadable save can still be copied after you play on and come back", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate((k) => localStorage.setItem(k, "{this is not a save"), SAVE);
+  await page.reload();
+  await page.locator("#play").click();
+  await expect(page.locator("#go")).toBeVisible();
+  await page.reload();
+  await page.locator("#about").click();
+  await page.locator("#open-code").click();
+  await expect(page.locator("#old-save")).toContainText("kept safe");
+  await expect(page.locator("#copy-old")).toBeVisible();
+});
+
 test("a save from a future version is kept the same way", async ({ page }) => {
   const future = JSON.stringify({ ...JSON.parse(toSave(newGame(pack, 1))), v: 99 });
   await withSave(page, future);

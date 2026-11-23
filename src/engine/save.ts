@@ -2,20 +2,24 @@
 // against the pack, and anything that does not fit means the whole save is treated as unreadable,
 // so the caller can keep it safe instead of playing on broken numbers.
 import { foeStats } from "./battle.ts";
-import { MAX_BANDS, MAX_LEVEL, MAX_PLAN, MAX_SIZE, goalOpen, neighbours } from "./campaign.ts";
+import { MAX_FIGHTERS, MAX_LEVEL, MAX_PLAN, YAWN_LIMIT, goalOpen, maxBands, maxSize, neighbours } from "./campaign.ts";
 import type { Band, Fighter, Game, GloomBand, GloomUnit, Meet, Pack } from "./types.ts";
 
 export const SAVE_VERSION = 1;
 const CODE_PREFIX = "LK1";
+/** far past any real game, so a pasted wall of text is refused before it is decoded */
+const MAX_CODE = 100_000;
+/** a name from a file only counts if the pack really has it, not if every object happens to */
+const has = (table: object, key: string) => Object.hasOwn(table, key);
 
 const isObject = (x: unknown): x is Record<string, unknown> => typeof x === "object" && x !== null && !Array.isArray(x);
 const count = (x: unknown, min = 0, max = 1_000_000_000): x is number => Number.isInteger(x) && (x as number) >= min && (x as number) <= max;
 const text = (x: unknown, max = 40): x is string => typeof x === "string" && x.length > 0 && x.length <= max;
 
 function readFighter(pack: Pack, x: unknown): Fighter | null {
-  if (!isObject(x) || !count(x.id, 1) || !text(x.name) || !text(x.cls) || !pack.classes[x.cls]) return null;
+  if (!isObject(x) || !count(x.id, 1) || !text(x.name) || !text(x.cls) || !has(pack.classes, x.cls)) return null;
   if (!count(x.level, 1, MAX_LEVEL) || !count(x.xp)) return null;
-  if (x.gear !== null && !(typeof x.gear === "string" && pack.gear[x.gear])) return null;
+  if (x.gear !== null && !(typeof x.gear === "string" && has(pack.gear, x.gear))) return null;
   if (!Array.isArray(x.plan) || x.plan.length > MAX_PLAN) return null;
   const allowed = pack.classes[x.cls].cards;
   if (!x.plan.every((id) => typeof id === "string" && allowed.includes(id))) return null;
@@ -26,7 +30,7 @@ function readFighter(pack: Pack, x: unknown): Fighter | null {
   return f;
 }
 
-function readBand(pack: Pack, x: unknown, ids: Set<number>, used: Set<number>): Band | null {
+function readBand(pack: Pack, x: unknown, ids: Set<number>, used: Set<number>, size: number): Band | null {
   if (!isObject(x) || !count(x.id, 1) || !text(x.name) || !text(x.at)) return null;
   const at = x.at;
   if (!pack.places.some((p) => p.id === at)) return null;
@@ -42,12 +46,12 @@ function readBand(pack: Pack, x: unknown, ids: Set<number>, used: Set<number>): 
     used.add(s);
     slots.push(s);
   }
-  if (slots.filter((s) => s !== null).length > MAX_SIZE) return null;
+  if (slots.filter((s) => s !== null).length > size) return null;
   return { id: x.id, name: x.name, at, to: x.to as string | null, slots };
 }
 
 function readGloom(pack: Pack, x: unknown): GloomBand | null {
-  if (!isObject(x) || !text(x.id) || !text(x.at) || !count(x.step) || !count(x.yawns)) return null;
+  if (!isObject(x) || !text(x.id) || !text(x.at) || !count(x.step) || !count(x.yawns, 0, YAWN_LIMIT)) return null;
   const at = x.at;
   if (!pack.gloom.some((d) => d.id === x.id) || !pack.places.some((p) => p.id === at) || at === pack.home) return null;
   if (x.to !== null && !(typeof x.to === "string" && x.to !== pack.home && neighbours(pack, at).includes(x.to))) return null;
@@ -55,7 +59,7 @@ function readGloom(pack: Pack, x: unknown): GloomBand | null {
   const units: GloomUnit[] = [];
   const spots = new Set<number>();
   for (const u of x.units) {
-    if (!isObject(u) || !text(u.foe) || !pack.foes[u.foe] || !count(u.slot, 0, 5) || !count(u.level, 1, MAX_LEVEL) || spots.has(u.slot)) return null;
+    if (!isObject(u) || !text(u.foe) || !has(pack.foes, u.foe) || !count(u.slot, 0, 5) || !count(u.level, 1, MAX_LEVEL) || spots.has(u.slot)) return null;
     if (!count(u.hp, 1, foeStats(pack, u.foe, u.level).max)) return null;
     spots.add(u.slot);
     units.push({ foe: u.foe, slot: u.slot, level: u.level, hp: u.hp });
@@ -74,6 +78,7 @@ export function checkGame(pack: Pack, x: unknown): Game | null {
   const lit = x.lit as string[];
   if (new Set(lit).size !== lit.length || !lit.includes(pack.home)) return null;
 
+  if (x.fighters.length > MAX_FIGHTERS + pack.gloom.filter((d) => d.captain).length) return null;
   const fighters: Fighter[] = [];
   for (const raw of x.fighters) {
     const f = readFighter(pack, raw);
@@ -84,19 +89,19 @@ export function checkGame(pack: Pack, x: unknown): Game | null {
   const ids = new Set(fighters.map((f) => f.id));
   const used = new Set<number>();
   const bands: Band[] = [];
-  if (x.bands.length < 1 || x.bands.length > MAX_BANDS) return null;
+  if (x.bands.length < 1 || x.bands.length > maxBands(pack, { lit })) return null;
   for (const raw of x.bands) {
-    const b = readBand(pack, raw, ids, used);
+    const b = readBand(pack, raw, ids, used, maxSize({ lit }));
     if (!b || bands.some((o) => o.id === b.id)) return null;
     bands.push(b);
   }
   if (!bands.some((b) => b.slots.some((s) => s !== null))) return null;
-  if (bands.some((b) => b.to === pack.goal) && !goalOpen(pack, { lit })) return null;
+  if (bands.some((b) => b.to === pack.goal || b.at === pack.goal) && !goalOpen(pack, { lit })) return null;
 
   const gloom: GloomBand[] = [];
   for (const raw of x.gloom) {
     const b = readGloom(pack, raw);
-    if (!b || gloom.some((o) => o.id === b.id)) return null;
+    if (!b || gloom.some((o) => o.id === b.id || o.at === b.at)) return null;
     gloom.push(b);
   }
 
@@ -190,6 +195,7 @@ export function toCode(g: Game): string {
 
 /** a game from a code, or null when the code is wrong, cut short or changed */
 export function fromCode(pack: Pack, code: string): Game | null {
+  if (code.length > MAX_CODE) return null;
   const parts = code.replace(/\s+/g, "").split(".");
   if (parts.length !== 3 || parts[0] !== CODE_PREFIX || sum(parts[1]) !== parts[2]) return null;
   const bytes = fromBase64(parts[1]);

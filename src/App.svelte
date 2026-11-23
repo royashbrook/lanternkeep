@@ -321,7 +321,8 @@
     <h3>Load a code</h3>
     <textarea id="code-in" rows="3" aria-label="paste a save code" placeholder="Paste a save code here" bind:value={codeIn}></textarea>
     <button id="load-code" class="secondary" disabled={!codeIn.trim()} onclick={tryCode}>Load this code</button>
-    {#if unreadable && saver.kept()}
+    {#if saver.kept()}
+      <p id="old-save">An older save could not be read. It is still kept safe here.</p>
       <button id="copy-old" class="secondary" onclick={() => copy(saver.kept() ?? "", "Copied the old save.")}>Copy the old save</button>
     {/if}
     {#if codeNote}<p id="code-note" role="status">{codeNote}</p>{/if}

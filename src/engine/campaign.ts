@@ -8,6 +8,8 @@ export const MAX_BANDS = 4;
 export const MAX_SIZE = 5;
 export const MAX_LEVEL = 9;
 export const MAX_PLAN = 3;
+/** how many friends you can hire up to. captains who wake up still join past it */
+export const MAX_FIGHTERS = 40;
 /** a band that has beaten you this many times is too sleepy to fight at all */
 export const YAWN_LIMIT = 4;
 const YAWN_SHARE = 0.25;
@@ -22,9 +24,9 @@ export const fightersIn = (g: Game, band: Band) =>
 export const xpNeeded = (level: number) => 24 + level * 12;
 export const isLit = (g: Game, id: string) => g.lit.includes(id);
 
-export const maxBands = (pack: Pack, g: Game) =>
+export const maxBands = (pack: Pack, g: Pick<Game, "lit">) =>
   Math.min(MAX_BANDS, pack.start.bands.length + g.lit.filter((id) => placeOf(pack, id).kind === "fort").length);
-export const maxSize = (g: Game) => Math.min(MAX_SIZE, 3 + Math.floor((g.lit.length - 1) / 3));
+export const maxSize = (g: Pick<Game, "lit">) => Math.min(MAX_SIZE, 3 + Math.floor((g.lit.length - 1) / 3));
 
 function makeFighter(pack: Pack, id: number, name: string, cls: string, level = 1, captain = false): Fighter {
   const f: Fighter = { id, name, cls, level, xp: 0, gear: null, plan: [...pack.classes[cls].plan] };
@@ -347,7 +349,7 @@ export const hireCost = (pack: Pack, g: Game, cls: string) => {
 };
 
 export function recruit(pack: Pack, g: Game, cls: string): Game {
-  if (g.phase !== "plan" || !offers(pack, g).includes(cls)) return g;
+  if (g.phase !== "plan" || !offers(pack, g).includes(cls) || g.fighters.length >= MAX_FIGHTERS) return g;
   const cost = hireCost(pack, g, cls);
   if (g.coins < cost) return g;
   const n = clone(g);
