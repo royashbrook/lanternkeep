@@ -62,6 +62,7 @@ for (const [name, viewport] of Object.entries(SIZES)) {
       await page.locator("#play").click();
       await check(page, "battle", ["#skip", "#pause", ".unit"]);
       await page.locator("#skip").click();
+      await expect(page.locator("#battle-ok")).toBeVisible();
       await check(page, "result", ["#battle-ok"]);
     });
 
