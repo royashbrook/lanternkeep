@@ -1,6 +1,6 @@
 // two players made of plain rules, both driving the real engine through the same calls the
 // screen uses. the walker heads for the nearest dark lantern. the wanderer picks any legal move.
-import { currentBattle, endTurn, finishBattle, isLit, movesFor, neighbours, newGame, planMove } from "./campaign.ts";
+import { currentBattle, endTurn, finishBattle, goalOpen, isLit, movesFor, neighbours, newGame, planMove } from "./campaign.ts";
 import { roll } from "./rng.ts";
 import type { Game, Pack } from "./types.ts";
 
@@ -37,15 +37,16 @@ function stepToward(pack: Pack, from: string, wanted: (id: string) => boolean): 
   return null;
 }
 
-function walkerMoves(pack: Pack, g: Game): Game {
+export function walkerMoves(pack: Pack, g: Game): Game {
   let n = g;
   const claimed = new Set<string>();
-  const finalReady = pack.places.filter((p) => p.id !== pack.goal).every((p) => isLit(g, p.id));
+  const open = goalOpen(pack, g);
   for (const band of n.bands) {
-    if (!movesFor(pack, n, band.id).length) continue;
-    const wanted = (id: string) => !isLit(n, id) && !claimed.has(id) && (finalReady || id !== pack.goal);
-    const to = stepToward(pack, band.at, wanted) ?? stepToward(pack, band.at, (id) => !isLit(n, id));
-    if (to) {
+    const moves = movesFor(pack, n, band.id);
+    if (!moves.length) continue;
+    const dark = (id: string) => !isLit(n, id) && (open || id !== pack.goal);
+    const to = stepToward(pack, band.at, (id) => dark(id) && !claimed.has(id)) ?? stepToward(pack, band.at, dark);
+    if (to && moves.includes(to)) {
       claimed.add(to);
       n = planMove(pack, n, band.id, to);
     }

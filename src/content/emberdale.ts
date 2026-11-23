@@ -52,7 +52,7 @@ const byId = <T extends { id: string }>(list: T[]) => Object.fromEntries(list.ma
 
 export const emberdale: Pack = {
   id: "emberdale",
-  title: "emberdale",
+  title: "Emberdale",
   classes: byId(classes),
   cards: byId(cards),
   foes: byId(foes),
@@ -93,19 +93,19 @@ export const emberdale: Pack = {
     { id: "g-honey", name: "the wandering drips", at: "honey", route: ["honey", "plum", "honey", "mill"], units: [{ foe: "puff", slot: 1, level: 2 }, { foe: "drip", slot: 3, level: 2 }, { foe: "drip", slot: 5, level: 1 }] },
     {
       id: "g-moss", name: "the Mossgate guard", at: "moss", route: ["moss"],
-      units: [{ foe: "puff", slot: 0, level: 3 }, { foe: "puff", slot: 2, level: 2 }, { foe: "mumble", slot: 4, level: 2 }, { foe: "snuffle", slot: 3, level: 2 }],
+      units: [{ foe: "puff", slot: 0, level: 2 }, { foe: "bump", slot: 2, level: 2 }, { foe: "mumble", slot: 4, level: 2 }, { foe: "drip", slot: 3, level: 1 }],
       captain: { name: "Captain Crumpet", cls: "knight", level: 3 },
     },
     { id: "g-plum", name: "the bumping bunch", at: "plum", route: ["plum", "cloud", "plum", "owl"], units: [{ foe: "bump", slot: 0, level: 3 }, { foe: "bump", slot: 2, level: 3 }, { foe: "hum", slot: 4, level: 3 }] },
-    { id: "g-cloud", name: "the Cloudstep drift", at: "cloud", route: ["cloud"], units: [{ foe: "flit", slot: 0, level: 4 }, { foe: "wisp", slot: 2, level: 3 }, { foe: "drip", slot: 3, level: 3 }, { foe: "mumble", slot: 5, level: 3 }] },
+    { id: "g-cloud", name: "the Cloudstep drift", at: "cloud", route: ["cloud"], units: [{ foe: "flit", slot: 0, level: 5 }, { foe: "puff", slot: 1, level: 4 }, { foe: "wisp", slot: 2, level: 4 }, { foe: "drip", slot: 3, level: 4 }, { foe: "mumble", slot: 5, level: 4 }] },
     {
       id: "g-owl", name: "the Owlwatch guard", at: "owl", route: ["owl"],
-      units: [{ foe: "puff", slot: 1, level: 4 }, { foe: "bump", slot: 0, level: 4 }, { foe: "drip", slot: 3, level: 4 }, { foe: "snuffle", slot: 5, level: 3 }],
+      units: [{ foe: "puff", slot: 1, level: 5 }, { foe: "bump", slot: 0, level: 5 }, { foe: "bump", slot: 2, level: 4 }, { foe: "drip", slot: 3, level: 5 }, { foe: "snuffle", slot: 5, level: 3 }],
       captain: { name: "Captain Nutmeg", cls: "mage", level: 4 },
     },
     {
       id: "g-keep", name: "the Great Yawn", at: "keep", route: ["keep"],
-      units: [{ foe: "puff", slot: 0, level: 5 }, { foe: "bump", slot: 1, level: 6 }, { foe: "puff", slot: 2, level: 5 }, { foe: "mumble", slot: 3, level: 5 }, { foe: "snuffle", slot: 4, level: 5 }, { foe: "hum", slot: 5, level: 5 }],
+      units: [{ foe: "puff", slot: 0, level: 6 }, { foe: "bump", slot: 1, level: 7 }, { foe: "wisp", slot: 2, level: 6 }, { foe: "mumble", slot: 3, level: 6 }, { foe: "flit", slot: 4, level: 6 }, { foe: "hum", slot: 5, level: 6 }],
       captain: { name: "The Great Yawn", cls: "bard", level: 6 },
     },
   ],
@@ -120,5 +120,5 @@ export const emberdale: Pack = {
   },
   names: ["Dumpling", "Thimble", "Pudding", "Button", "Bramble", "Sprout", "Tumble", "Pepper", "Muffin", "Teacup", "Pretzel", "Noodle", "Gumdrop", "Sprocket", "Mitten", "Toffee"],
   bandNames: ["Band of the Glow", "Band of the Flame"],
-  foeScale: { hp: 0.62, power: 0.62 },
+  foeScale: { hp: 0.6, power: 0.62 },
 };

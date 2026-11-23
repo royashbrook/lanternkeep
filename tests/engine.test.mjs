@@ -217,13 +217,29 @@ test("every band beaten: everyone is home, the turn goes on and the map keeps it
   assert.ok(movesFor(pack, g, 1).length > 0);
 });
 
+/** every lantern but the great one is lit, and only the keep's own gloom is left */
+const keepOpen = (seed = 1) => {
+  const g = structuredClone(newGame(pack, seed));
+  g.lit = pack.places.filter((p) => p.id !== pack.goal).map((p) => p.id);
+  g.gloom = g.gloom.filter((b) => b.id === "g-keep");
+  return g;
+};
+
+test("the keep stays shut until every other lantern is lit", () => {
+  const shut = structuredClone(newGame(pack, 1));
+  shut.bands[0].at = "cloud";
+  assert.ok(!movesFor(pack, shut, 1).includes(pack.goal));
+  assert.equal(planMove(pack, shut, 1, pack.goal), shut);
+  const open = keepOpen();
+  open.bands[0].at = "cloud";
+  assert.ok(movesFor(pack, open, 1).includes(pack.goal));
+});
+
 test("each win by the gloom makes it sleepier, until it cannot fight at all", () => {
-  let g = structuredClone(newGame(pack, 1));
+  let g = keepOpen();
   const foe = g.gloom.find((b) => b.id === "g-keep");
   for (const u of foe.units) (u.level = 9), (u.hp = foeStats(pack, u.foe, 9).max);
   foe.yawns = YAWN_LIMIT;
-  g.lit.push("cloud");
-  g.gloom = g.gloom.filter((b) => b.id !== "g-cloud");
   g.bands[0].at = "cloud";
   g.bands[0].to = "keep";
   const met = endTurn(pack, g);
@@ -329,9 +345,8 @@ test("a beaten captain wakes up and joins the band", () => {
 });
 
 test("lighting the great lantern wins and nothing runs after it", () => {
-  const g = structuredClone(newGame(pack, 1));
-  g.gloom = g.gloom.filter((b) => b.id !== "g-keep" && b.id !== "g-cloud");
-  g.lit.push("cloud");
+  const g = keepOpen();
+  g.gloom = [];
   g.bands[0].at = "cloud";
   g.bands[0].to = "keep";
   const won = endTurn(pack, g);

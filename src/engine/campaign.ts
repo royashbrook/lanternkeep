@@ -19,7 +19,7 @@ export const neighbours = (pack: Pack, id: string) =>
 export const placeOf = (pack: Pack, id: string) => pack.places.find((p) => p.id === id)!;
 export const fightersIn = (g: Game, band: Band) =>
   band.slots.flatMap((id) => (id === null ? [] : g.fighters.filter((f) => f.id === id)));
-export const xpNeeded = (level: number) => 30 + level * 18;
+export const xpNeeded = (level: number) => 24 + level * 12;
 export const isLit = (g: Game, id: string) => g.lit.includes(id);
 
 export const maxBands = (pack: Pack, g: Game) =>
@@ -90,10 +90,13 @@ function setIntents(pack: Pack, g: Game) {
   }
 }
 
+/** the great lantern's door opens once every other lantern is lit, so the last battle comes last */
+export const goalOpen = (pack: Pack, g: Pick<Game, "lit">) => pack.places.every((p) => p.id === pack.goal || g.lit.includes(p.id));
+
 export function movesFor(pack: Pack, g: Game, bandId: number): string[] {
   const band = g.bands.find((b) => b.id === bandId);
   if (!band || g.phase !== "plan" || !band.slots.some((s) => s !== null)) return [];
-  return neighbours(pack, band.at);
+  return neighbours(pack, band.at).filter((id) => id !== pack.goal || goalOpen(pack, g));
 }
 
 /** plan a walk, or pass null (or the band's own place) to stay */
@@ -186,7 +189,7 @@ export function endTurn(pack: Pack, g: Game): Game {
   const n = clone(g);
   n.after = "gloom";
   for (const b of n.bands) {
-    if (b.to && neighbours(pack, b.at).includes(b.to) && b.slots.some((s) => s !== null)) b.at = b.to;
+    if (b.to && movesFor(pack, n, b.id).includes(b.to)) b.at = b.to;
     b.to = null;
   }
   arrive(pack, n);

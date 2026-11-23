@@ -2,7 +2,7 @@
 // against the pack, and anything that does not fit means the whole save is treated as unreadable,
 // so the caller can keep it safe instead of playing on broken numbers.
 import { foeStats } from "./battle.ts";
-import { MAX_BANDS, MAX_LEVEL, MAX_PLAN, MAX_SIZE, neighbours } from "./campaign.ts";
+import { MAX_BANDS, MAX_LEVEL, MAX_PLAN, MAX_SIZE, goalOpen, neighbours } from "./campaign.ts";
 import type { Band, Fighter, Game, GloomBand, GloomUnit, Meet, Pack } from "./types.ts";
 
 export const SAVE_VERSION = 1;
@@ -91,6 +91,7 @@ export function checkGame(pack: Pack, x: unknown): Game | null {
     bands.push(b);
   }
   if (!bands.some((b) => b.slots.some((s) => s !== null))) return null;
+  if (bands.some((b) => b.to === pack.goal) && !goalOpen(pack, { lit })) return null;
 
   const gloom: GloomBand[] = [];
   for (const raw of x.gloom) {

@@ -4,7 +4,9 @@ import type { BattleEvent, BattleLog, CardDef, ClassDef, Fielder, GearDef, Pack 
 
 /** the guaranteed end. when the rounds run out everyone gets sleepy and the side with more
  * of its strength left wins, the player on a tie */
-export const MAX_ROUNDS = 8;
+export const MAX_ROUNDS = 10;
+/** everyone is a bit tougher than their card says, so a battle has time to swing and be watched */
+const TOUGH = 1.3;
 /** a card meant for the hurt only fires below this much health */
 const HURT = 0.8;
 const STRONG = 1.5;
@@ -20,7 +22,7 @@ export const colOf = (slot: number) => slot % 3;
 export function statsOf(cls: ClassDef, level: number, gear?: GearDef | null) {
   const up = level - 1;
   return {
-    max: Math.round(cls.hp * (1 + 0.17 * up)) + (gear?.hp ?? 0),
+    max: Math.round(cls.hp * TOUGH * (1 + 0.17 * up)) + (gear?.hp ?? 0),
     power: Math.round(cls.power * (1 + 0.15 * up)) + (gear?.power ?? 0),
     speed: cls.speed + (gear?.speed ?? 0),
   };
@@ -182,7 +184,8 @@ export function fight(pack: Pack, band: Fielder[], gloom: Fielder[], seed: numbe
       }
     } else if (card.act === "heal") {
       const to = target as Live;
-      const amount = (c.heal ?? 6) + (u.level - 1) * 2;
+      // gloomlings heal at their scaled power, or two of them could stall a battle forever
+      const amount = Math.max(1, Math.round(((c.heal ?? 6) + (u.level - 1) * 2) * (u.foe ? pack.foeScale.power : 1)));
       const n = Math.min(amount, to.max - to.hp);
       to.hp += n;
       events.push({ t: "heal", by: u.i, to: to.i, n, hp: to.hp });
