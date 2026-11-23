@@ -19,7 +19,7 @@ const cards: CardDef[] = [
 
 const hits = ["hit-near", "hit-best", "hit-hurt", "hit-big", "hit-front"];
 const classes: ClassDef[] = [
-  { id: "knight", name: "knight", blurb: "stands in front and guards friends", hp: 36, power: 7, speed: 4, reach: "front", guards: true, beats: ["rider"], cards: hits, plan: ["hit-best", "hit-near"], cost: 45 },
+  { id: "knight", name: "knight", blurb: "guards the front, great at riders", hp: 36, power: 7, speed: 4, reach: "front", guards: true, beats: ["rider"], cards: hits, plan: ["hit-best", "hit-near"], cost: 45 },
   { id: "archer", name: "archer", blurb: "shoots anyone, great at flyers", hp: 21, power: 8, speed: 6, reach: "any", beats: ["flyer"], cards: ["hit-flyer", ...hits, "hit-back"], plan: ["hit-flyer", "hit-hurt", "hit-near"], cost: 40 },
   { id: "mage", name: "mage", blurb: "big magic that splashes, great at knights", hp: 18, power: 9, speed: 5, reach: "any", splash: true, beats: ["knight"], cards: [...hits, "hit-back"], plan: ["hit-best", "hit-big", "hit-near"], cost: 50 },
   { id: "healer", name: "healer", blurb: "makes hurt friends feel better", hp: 22, power: 3, speed: 5, reach: "front", heal: 10, beats: [], cards: ["heal-hurt", "heal-front", "heal-self", "hit-near"], plan: ["heal-hurt", "hit-near"], cost: 45 },

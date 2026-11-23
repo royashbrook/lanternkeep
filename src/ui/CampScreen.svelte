@@ -7,6 +7,7 @@
   import Figure from "./Figure.svelte";
   import Flag from "./Flag.svelte";
   import Sheet from "./Sheet.svelte";
+  import { cap } from "./words.ts";
 
   let { pack, game, sound, onChange, onBack }: { pack: Pack; game: Game; sound: Sound; onChange: (g: Game) => void; onBack: () => void } = $props();
 
@@ -89,7 +90,18 @@
     drag = null;
   }
 
-  const cardWords = (id: string) => pack.cards[id]?.words ?? id;
+  let hired = $state("");
+  function hire(cls: string) {
+    const next = recruit(pack, game, cls);
+    if (next === game) return;
+    sound.play("coin");
+    const f = next.fighters[next.fighters.length - 1];
+    const seated = next.bands.find((b) => b.slots.includes(f.id));
+    hired = seated ? `${f.name} the ${f.cls} joined ${seated.name}!` : `${f.name} the ${f.cls} is waiting in camp. Your bands are full.`;
+    onChange(next);
+  }
+
+  const cardWords = (id: string) => cap(pack.cards[id]?.words ?? id);
   function move(f: Fighter, i: number, by: number) {
     const plan = [...f.plan];
     const j = i + by;
@@ -99,10 +111,6 @@
   }
   const drop = (f: Fighter, id: string) => change(setPlan(pack, game, f.id, f.plan.filter((c) => c !== id)));
   const add = (f: Fighter, id: string) => change(setPlan(pack, game, f.id, [...f.plan, id]));
-  const beatsText = (cls: string) => {
-    const list = pack.classes[cls].beats;
-    return list.length ? `Strong against ${list.join(" and ")}s.` : "";
-  };
   const statLine = (f: Fighter) => statsOf(pack.classes[f.cls], f.level, f.gear ? pack.gear[f.gear] : null);
   const gearItems = $derived(Object.values(pack.gear));
 </script>
@@ -185,22 +193,21 @@
       {#if pickedF}
         <div class="pickbar">
           <span class="pickfig"><Figure kind={pickedF.cls} captain={pickedF.captain} /></span>
-          <span class="picktext"><b>{pickedF.name}</b> the {pickedF.cls}<br /><small>{pack.classes[pickedF.cls].blurb}</small></span>
+          <span class="picktext"><b>{pickedF.name}</b> the {pickedF.cls}<br /><small>{cap(pack.classes[pickedF.cls].blurb)}.</small></span>
           <button id="open-plan" class="primary" onclick={() => { detail = pickedF?.id ?? null; picked = null; }}>Plans</button>
         </div>
       {/if}
     {:else if tab === "hire"}
-      <p class="lead">Every town you light has someone who wants to help.</p>
+      <p class="lead" role="status">{hired || "Every town you light has someone who wants to help."}</p>
       <div class="hiregrid">
         {#each offers(pack, game) as cls (cls)}
           {@const c = pack.classes[cls]}
           {@const cost = hireCost(pack, game, cls)}
           <article class="hirecard">
             <span class="hirefig"><Figure kind={cls} /></span>
-            <h2><Badge cls={cls} />{c.name}</h2>
-            <p>{c.blurb}.</p>
-            {#if beatsText(cls)}<p class="quiet">{beatsText(cls)}</p>{/if}
-            <button class="primary" data-hire={cls} disabled={game.coins < cost} aria-label={`hire a ${c.name} for ${cost} coins`} onclick={() => { sound.play("coin"); onChange(recruit(pack, game, cls)); }}>
+            <h2><Badge cls={cls} />{cap(c.name)}</h2>
+            <p>{cap(c.blurb)}.</p>
+            <button class="primary" data-hire={cls} disabled={game.coins < cost} aria-label={`hire a ${c.name} for ${cost} coins`} onclick={() => hire(cls)}>
               Hire for {cost}
             </button>
           </article>
@@ -221,8 +228,8 @@
       <div class="geargrid">
         {#each gearItems as g (g.id)}
           <article class="gearcard" class:owned={gearF?.gear === g.id}>
-            <h2>{g.name}</h2>
-            <p>{g.blurb}</p>
+            <h2>{cap(g.name)}</h2>
+            <p>{cap(g.blurb)}.</p>
             {#if gearF?.gear === g.id}
               <p class="good">{gearF.name} has this</p>
             {:else}
@@ -250,7 +257,7 @@
       <span class="planfig"><Figure kind={detailF.cls} captain={detailF.captain} /></span>
       <div>
         <h2>{detailF.name} the {c.name}</h2>
-        <p>{c.blurb}.</p>
+        <p>{cap(c.blurb)}.</p>
         <p class="statline">Level {detailF.level}, health {s.max}, power {s.power}</p>
         {#if detailF.level < MAX_LEVEL}
           <span class="bar xp" role="img" aria-label={`${detailF.xp} of ${xpNeeded(detailF.level)} stars to the next level`}><span class="fill" style:width={`${(detailF.xp / xpNeeded(detailF.level)) * 100}%`}></span></span>

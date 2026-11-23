@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import { fightersIn, goalOpen, movesFor, placeOf, YAWN_LIMIT } from "../engine/campaign.ts";
   import type { Band, Game, Pack, PlaceDef } from "../engine/types.ts";
   import type { Sound } from "../lib/sound.ts";
@@ -12,7 +13,8 @@
     onPlan: (band: number, to: string | null) => void; onGo: () => void; onCamp: () => void; onMenu: () => void;
   } = $props();
 
-  let selected = $state(1);
+  // back from a battle or camp, start on a band that can actually walk
+  let selected = $state(untrack(() => game.bands.find((b) => b.slots.some((s) => s !== null))?.id ?? 1));
   let info = $state<string | null>(null);
 
   const land = $derived(view.landscape);

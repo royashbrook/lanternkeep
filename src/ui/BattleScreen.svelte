@@ -7,10 +7,14 @@
   import Badge from "./Badge.svelte";
   import Figure from "./Figure.svelte";
   import Scenery from "./Scenery.svelte";
+  import { cap } from "./words.ts";
 
-  let { pack, log, where, bandName, foeName, reward, sound, onDone }: {
+  let { pack, log, where, bandName, foeName, reward, sound, held, onDone, onMenu }: {
     pack: Pack; log: BattleLog; where: string; bandName: string; foeName: string;
-    reward: { xp: number; coins: number }; sound: Sound; onDone: () => void;
+    reward: { xp: number; coins: number }; sound: Sound;
+    /** a menu is open over the battle, so it holds still */
+    held: boolean;
+    onDone: () => void; onMenu: () => void;
   } = $props();
 
   interface Float { id: number; to: number; text: string; kind: string }
@@ -24,6 +28,8 @@
   let struck = $state(-1);
   let round = $state(1);
   let caption = $state("The gloom is here!");
+  /** the card your fighter just chose, so a plan you set can be seen working */
+  let cue = $state("");
   let floats = $state<Float[]>([]);
   let speed = $state(1);
   let paused = $state(false);
@@ -49,10 +55,13 @@
         actor = -1;
         struck = -1;
         break;
-      case "think":
+      case "think": {
         actor = e.by;
         struck = -1;
+        const words = e.card ? pack.cards[e.card]?.words : null;
+        cue = units[e.by].side === "band" && words ? `${units[e.by].name}'s plan: ${words}` : "";
         break;
+      }
       case "hit":
         hp[e.to] = e.hp;
         struck = e.to;
@@ -116,7 +125,7 @@
       const tick = () => {
         if (stopped || skipping) return resolve();
         const now = performance.now();
-        if (!paused && !document.hidden) left -= (now - last) * speed;
+        if (!paused && !held && !document.hidden) left -= (now - last) * speed;
         last = now;
         if (left <= 0) resolve();
         else setTimeout(tick, Math.min(40, left));
@@ -255,6 +264,9 @@
         <button class="speed" class:sel={speed === s} aria-pressed={speed === s} aria-label={`speed ${s}`} onclick={() => (speed = s)} disabled={finished}>{s}x</button>
       {/each}
       <button id="skip" onclick={skip} disabled={finished}>Skip</button>
+      <button id="battle-menu" aria-label="menu and about" onclick={onMenu}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+      </button>
     </div>
   </header>
 
@@ -268,7 +280,10 @@
     </section>
   </div>
 
-  <p class="caption">{caption}</p>
+  <div class="caption">
+    <p class="cue" id="plan-cue">{cue}</p>
+    <p>{cap(caption)}</p>
+  </div>
 
   {#if finished}
     <div class="result" class:won={log.win} role="status">

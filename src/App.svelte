@@ -233,7 +233,9 @@
       foeName={pack.gloom.find((d) => d.id === game?.queue[0].gloom)!.name}
       reward={rewardFor(pack, game, battle)}
       {sound}
+      held={sheet !== ""}
       onDone={battleDone}
+      onMenu={() => (sheet = "about")}
     />
   {/key}
 {:else if showWin && game}

@@ -178,7 +178,7 @@ button svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke
   text-shadow: var(--text-cut);
   letter-spacing: 0.01em;
 }
-.tagline { position: relative; font-size: clamp(1rem, 2.6dvh, 1.35rem); color: var(--night-ink); max-width: 30ch; }
+.tagline { position: relative; font-size: clamp(1rem, 2.6dvh, 1.35rem); color: var(--night-ink); max-width: 46ch; text-wrap: balance; }
 .titlecast { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 6px; height: clamp(50px, 14dvh, 130px); }
 .titlecast span { display: block; width: clamp(42px, 11dvh, 104px); height: 100%; }
 .titlecast .gl { margin-left: clamp(10px, 4vw, 34px); }
@@ -485,10 +485,11 @@ button svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke
 .floaty.song { color: var(--glow); }
 .floaty.guarded { color: var(--night-dim); }
 .caption {
-  min-height: 2.5em;
+  min-height: 3em;
   margin: 3px auto 0;
-  max-width: 44ch;
+  max-width: 48ch;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
@@ -496,6 +497,7 @@ button svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke
   font-weight: 700;
   color: var(--night-ink);
 }
+.cue { min-height: 1.3em; font-size: 0.82em; font-weight: 600; color: var(--glow); }
 .result { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; padding: 16px; background: var(--scrim); animation: fadein 0.25s ease; }
 .resultcard {
   width: min(100%, 430px);
@@ -519,7 +521,8 @@ button svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke
 .spoils span { display: inline-flex; align-items: center; gap: 4px; }
 @media (orientation: landscape) and (max-height: 520px) {
   .battlebar { padding-top: 12px; flex-wrap: nowrap; }
-  .caption { min-height: 1.5em; font-size: 0.85rem; }
+  .caption { min-height: 1.5em; font-size: 0.85rem; flex-direction: row; gap: 10px; }
+  .cue { min-height: 0; }
   .nameplate { height: 12px; }
   .bar { height: 8px; }
   .badge { width: 12px; height: 12px; }
@@ -698,6 +701,18 @@ button svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke
 .whofig { display: block; width: 50px; height: 60px; }
 .who small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.72rem; }
 
+@media (orientation: landscape) and (max-height: 520px) {
+  .camphead { padding: 14px 10px 2px; }
+  .camphead h1 { font-size: 1.2rem; }
+  .campbody { padding: 8px; }
+  .lead { margin-bottom: 5px; font-size: 0.9rem; }
+  .enemyside { display: none; }
+  .cell { height: 78px; }
+  .bandcard, .benchcard { padding: 6px; }
+  .bandgrid { gap: 6px; }
+  .cells { gap: 3px; }
+}
+
 /* ---------------------------------------------------------------- sheets */
 dialog.sheet {
   width: min(94vw, 560px);
@@ -780,5 +795,6 @@ textarea::placeholder { color: var(--ink-dim); }
     animation: none !important;
     transition: none !important;
   }
-  .fogdoor, .embers { display: none; }
+  /* these only make sense moving: held still they would sit on top of a fighter */
+  .fogdoor, .embers, .burst, .sparks { display: none; }
 }
