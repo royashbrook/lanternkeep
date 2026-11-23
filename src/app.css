@@ -608,7 +608,7 @@ button svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke
 .winrays { position: absolute; left: 50%; top: 30%; width: 0; height: 0; animation: spin 40s linear infinite; }
 .winrays i { position: absolute; left: -6vmax; bottom: 0; width: 12vmax; height: 95vmax; background: var(--ray); mix-blend-mode: screen; clip-path: polygon(50% 100%, 0 0, 100% 0); transform-origin: 50% 100%; transform: rotate(calc(var(--r) * 22.5deg)); }
 .winlanterns { position: relative; display: flex; justify-content: center; gap: clamp(4px, 2vw, 18px); height: clamp(40px, 11dvh, 104px); }
-.winlanterns span { display: block; width: clamp(22px, min(7dvh, 10vw), 70px); animation: bob 2.4s ease-in-out infinite; animation-delay: calc(var(--l) * -0.32s); }
+.winlanterns span { display: block; width: clamp(20px, min(7dvh, 7.2vw), 70px); animation: bob 2.4s ease-in-out infinite; animation-delay: calc(var(--l) * -0.32s); }
 .wintext { position: relative; display: flex; flex-direction: column; align-items: center; gap: clamp(5px, 1.4dvh, 12px); max-width: 620px; padding: clamp(10px, 2.2dvh, 22px) clamp(12px, 3vw, 28px); border-radius: var(--radius); background: var(--surface-raised); color: var(--ink); box-shadow: var(--shadow); }
 .wintext h1 { font-size: clamp(1.45rem, 4.8dvh, 2.7rem); color: var(--plum); }
 .winstats { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 18px; margin: 0; }

@@ -11,7 +11,7 @@
 <main class="win">
   <div class="winrays" aria-hidden="true">{#each { length: 16 } as _, i (i)}<i style:--r={i}></i>{/each}</div>
   <div class="winlanterns" aria-hidden="true">
-    {#each pack.places.slice(0, 7) as p, i (p.id)}<span style:--l={i}><Lantern lit /></span>{/each}
+    {#each pack.places as p, i (p.id)}<span style:--l={i}><Lantern lit /></span>{/each}
   </div>
   <div class="wintext">
     <h1>{pack.title} is bright again!</h1>
