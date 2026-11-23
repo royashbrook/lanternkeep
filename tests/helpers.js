@@ -50,6 +50,13 @@ export async function toMap(page) {
   throw Error("never got back to the map");
 }
 
+/** waits out entrance animations, so a control is measured at its real size and not mid pop-in.
+ * endless ones (a flickering flame) are left running */
+export const settled = (page) =>
+  page.evaluate(() => Promise.all(document.getAnimations()
+    .filter((a) => a.effect?.getComputedTiming().iterations !== Infinity)
+    .map((a) => a.finished.catch(() => {}))));
+
 /** every visible control clears 44px on its short side */
 export const smallTargets = (page) =>
   page.evaluate(() => {

@@ -1,5 +1,5 @@
 import { test, expect } from "./fixtures.js";
-import { SIZES, endTurn, newGame, offScreen, overflow, pack, planMove, playedTo, smallTargets, state, toSave } from "./helpers.js";
+import { SIZES, endTurn, newGame, offScreen, overflow, pack, planMove, playedTo, settled, smallTargets, state, toSave } from "./helpers.js";
 
 const seed = (page, game) =>
   page.addInitScript(([g]) => {
@@ -15,6 +15,7 @@ for (const [name, viewport] of Object.entries(SIZES)) {
     test.use({ viewport });
 
     const check = async (page, what, needed) => {
+      await settled(page);
       expect(await overflow(page), `${what} scrolls the page`).toBe(false);
       expect(await smallTargets(page), `${what} small targets`).toEqual([]);
       for (const selector of needed) {
@@ -68,7 +69,9 @@ for (const [name, viewport] of Object.entries(SIZES)) {
       await seed(page, playedTo(999));
       await page.goto("/");
       await page.locator("#play").click();
-      await check(page, "win", ["#again", ".winlanterns span", ".parade span"]);
+      await check(page, "win", ["#again", ".parade span"]);
+      // a short phone hides the lantern row on purpose; wherever it shows, all of it fits
+      expect(await offScreen(page, ".winlanterns span")).toBe(0);
     });
 
     test("about reaches its last line by scrolling the sheet", async ({ page }) => {
