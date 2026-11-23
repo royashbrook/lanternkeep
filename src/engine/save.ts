@@ -13,7 +13,11 @@ const MAX_CODE = 100_000;
 const has = (table: object, key: string) => Object.hasOwn(table, key);
 
 const isObject = (x: unknown): x is Record<string, unknown> => typeof x === "object" && x !== null && !Array.isArray(x);
-const count = (x: unknown, min = 0, max = 1_000_000_000): x is number => Number.isInteger(x) && (x as number) >= min && (x as number) <= max;
+/** a number in a save can be this big. a code must leave far more room than any game can use up,
+ * so a game loaded from one can never count its way past what a save allows */
+const SAVE_MAX = 1_000_000_000_000;
+const CODE_MAX = 1_000_000_000;
+const count = (x: unknown, min = 0, max = SAVE_MAX): x is number => Number.isInteger(x) && (x as number) >= min && (x as number) <= max;
 const text = (x: unknown, max = 40): x is string => typeof x === "string" && x.length > 0 && x.length <= max;
 
 function readFighter(pack: Pack, x: unknown): Fighter | null {
@@ -53,8 +57,11 @@ function readBand(pack: Pack, x: unknown, ids: Set<number>, used: Set<number>, s
 function readGloom(pack: Pack, x: unknown): GloomBand | null {
   if (!isObject(x) || !text(x.id) || !text(x.at) || !count(x.step) || !count(x.yawns, 0, YAWN_LIMIT)) return null;
   const at = x.at;
-  if (!pack.gloom.some((d) => d.id === x.id) || !pack.places.some((p) => p.id === at) || at === pack.home) return null;
-  if (x.to !== null && !(typeof x.to === "string" && x.to !== pack.home && neighbours(pack, at).includes(x.to))) return null;
+  const route = pack.gloom.find((d) => d.id === x.id)?.route;
+  if (!route || !pack.places.some((p) => p.id === at) || at === pack.home) return null;
+  // a gloom band is always on its route, and only ever aims for the next stop
+  if (route[x.step % route.length] !== at) return null;
+  if (x.to !== null && !(x.to === route[(x.step + 1) % route.length] && x.to !== pack.home && neighbours(pack, at).includes(x.to))) return null;
   if (!Array.isArray(x.units) || x.units.length === 0 || x.units.length > 6) return null;
   const units: GloomUnit[] = [];
   const spots = new Set<number>();
@@ -92,7 +99,8 @@ export function checkGame(pack: Pack, x: unknown): Game | null {
   if (x.bands.length < 1 || x.bands.length > maxBands(pack, { lit })) return null;
   for (const raw of x.bands) {
     const b = readBand(pack, raw, ids, used, maxSize({ lit }));
-    if (!b || bands.some((o) => o.id === b.id)) return null;
+    // new bands take the next number, so the ones here have to be 1, 2, 3 in order
+    if (!b || b.id !== bands.length + 1) return null;
     bands.push(b);
   }
   if (!bands.some((b) => b.slots.some((s) => s !== null))) return null;
@@ -104,6 +112,13 @@ export function checkGame(pack: Pack, x: unknown): Game | null {
     if (!b || gloom.some((o) => o.id === b.id || o.at === b.at)) return null;
     gloom.push(b);
   }
+  // after they walk there still has to be one gloom band to a place
+  const ends = gloom.map((b) => b.to ?? b.at);
+  if (new Set(ends).size !== ends.length) return null;
+  // hires stop at the limit and each captain wakes once, so a captain still asleep always has room
+  const woken = fighters.filter((f) => f.captain).length;
+  const beaten = pack.gloom.filter((d) => d.captain && !gloom.some((b) => b.id === d.id)).length;
+  if (fighters.length - woken > MAX_FIGHTERS || woken > beaten) return null;
 
   const queue: Meet[] = [];
   for (const m of x.queue) {
@@ -200,9 +215,13 @@ export function fromCode(pack: Pack, code: string): Game | null {
   if (parts.length !== 3 || parts[0] !== CODE_PREFIX || sum(parts[1]) !== parts[2]) return null;
   const bytes = fromBase64(parts[1]);
   if (!bytes) return null;
+  let g: Game | null;
   try {
-    return fromSave(pack, new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+    g = fromSave(pack, new TextDecoder("utf-8", { fatal: true }).decode(bytes));
   } catch {
     return null;
   }
+  if (!g) return null;
+  const counters = [g.coins, g.turn, g.fights, g.nextId, g.hired, g.stats.wins, g.stats.naps, g.stats.poofs, ...g.fighters.map((f) => f.xp), ...g.gloom.map((b) => b.step)];
+  return counters.every((n) => n <= CODE_MAX) ? g : null;
 }

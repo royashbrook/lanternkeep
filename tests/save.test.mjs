@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { emberdale as pack } from "../src/content/emberdale.ts";
-import { MAX_FIGHTERS, currentBattle, endTurn, finishBattle, movesFor, newGame, offers, planMove, recruit } from "../src/engine/campaign.ts";
+import { MAX_FIGHTERS, currentBattle, endTurn, finishBattle, movesFor, neighbours, newGame, offers, planMove, recruit } from "../src/engine/campaign.ts";
 import { checkGame, fromCode, fromSave, toCode, toSave } from "../src/engine/save.ts";
 
 const midBattle = () => endTurn(pack, planMove(pack, newGame(pack, 11), 1, "mill"));
@@ -122,6 +122,55 @@ test("every real game stays a readable save, all the way to the win", () => {
     if (g.phase === "won") wins++;
   }
   assert.ok(wins > 0, "some of these games really reached the win");
+});
+
+test("a code that loads is still a good save after the next moves", () => {
+  const edits = {
+    "band numbers shifted": (r) => r.bands.forEach((b) => (b.id += 1)),
+    "gloom aiming at a neighbour": (r, roll) => {
+      const b = r.gloom[roll(r.gloom.length)];
+      if (b) b.to = neighbours(pack, b.at)[roll(4)] ?? null;
+    },
+    "gloom one step on": (r, roll) => {
+      const b = r.gloom[roll(r.gloom.length)];
+      if (b) b.step += 1;
+    },
+    "counters at the top": (r) => Object.assign(r, { coins: 1_000_000_000, turn: 1_000_000_000, fights: 1_000_000_000 }),
+    "a full roster": (r) => {
+      while (r.fighters.length < MAX_FIGHTERS) r.fighters.push({ ...r.fighters[0], id: r.nextId++, captain: undefined });
+    },
+    "a captain nobody woke": (r) => (r.fighters[0].captain = true),
+  };
+  const next = (g, roll) => {
+    if (g.phase === "battle") return { ...finishBattle(pack, g), news: [] };
+    if (g.phase !== "plan") return g;
+    let n = g;
+    for (const b of n.bands) {
+      const moves = movesFor(pack, n, b.id);
+      if (moves.length) n = planMove(pack, n, b.id, moves[roll(moves.length)]);
+    }
+    return { ...endTurn(pack, n), news: [] };
+  };
+  let loaded = 0;
+  for (let seed = 1; seed <= 25; seed++) {
+    let g = newGame(pack, seed), r = seed * 104729;
+    const roll = (n) => (n > 0 ? ((r = (Math.imul(r, 48271) + 11) >>> 0) >>> 8) % n : 0);
+    for (let step = 0; step < 60 && g.phase !== "won"; step++) {
+      for (const [name, edit] of Object.entries(edits)) {
+        const raw = JSON.parse(toSave(g));
+        edit(raw, roll);
+        let n = fromCode(pack, toCode(raw));
+        if (!n) continue;
+        loaded++;
+        for (let k = 0; k < 4; k++) {
+          n = next(n, roll);
+          assert.ok(fromSave(pack, toSave(n)), `${name}, seed ${seed}, step ${step}, move ${k}`);
+        }
+      }
+      g = next(g, roll);
+    }
+  }
+  assert.ok(loaded > 0, "some edited games really loaded");
 });
 
 test("the camp stops hiring when it is full", () => {

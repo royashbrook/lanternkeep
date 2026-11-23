@@ -1,3 +1,8 @@
+<script lang="ts" module>
+  // the arrow tip is a brief cue: the first turn arrows appear, then never over the map again
+  let arrowsTaught = "";
+</script>
+
 <script lang="ts">
   import { untrack } from "svelte";
   import { fightersIn, goalOpen, movesFor, placeOf, YAWN_LIMIT } from "../engine/campaign.ts";
@@ -33,11 +38,19 @@
   const gloomAt = (id: string) => game.gloom.find((b) => b.at === id);
   const captainOf = (id: string) => !!pack.gloom.find((d) => d.id === id)?.captain;
 
+  const turnKey = $derived(`${game.seed}:${game.turn}`);
+  let arrowTurn = $state(arrowsTaught);
+  $effect(() => {
+    if (arrowsTaught || !game.gloom.some((b) => b.to)) return;
+    arrowsTaught = turnKey;
+    arrowTurn = turnKey;
+  });
+
   const hint = $derived.by(() => {
     if (!hasFolk(band)) return "This band is empty. Add friends in Camp.";
     if (game.turn === 1) return game.bands.some((b) => b.to) ? "Tap Go when you are ready." : "Tap a glowing town to walk there.";
+    if (arrowTurn === turnKey) return "Purple arrows show where the gloom will walk.";
     if (game.turn === 3 && game.coins >= 35) return "You have coins! Open Camp to get new friends.";
-    if (game.gloom.some((b) => b.to)) return "Purple arrows show where the gloom will walk.";
     return "";
   });
 

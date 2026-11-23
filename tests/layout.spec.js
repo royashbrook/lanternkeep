@@ -148,6 +148,21 @@ test("the map only talks about purple arrows when there are some", async ({ page
   await expect(page.getByText("Purple arrows")).toHaveCount(0);
 });
 
+test("the arrow tip shows the first turn arrows appear, then leaves the map alone", async ({ page }) => {
+  const start = newGame(pack, 5);
+  const roaming = endTurn(pack, { ...start, gloom: start.gloom.filter((b) => b.id === "g-honey") });
+  expect(roaming.gloom[0].to).toBeTruthy();
+  await seed(page, roaming);
+  await page.goto("/");
+  await page.locator("#play").click();
+  await expect(page.getByText("Purple arrows")).toBeVisible();
+  for (const turn of [roaming.turn + 1, roaming.turn + 2]) {
+    await page.locator("#go").click();
+    await expect.poll(async () => (await state(page)).turn).toBe(turn);
+    await expect(page.getByText("Purple arrows")).toHaveCount(0);
+  }
+});
+
 test("turning the tablet on the map keeps the plan and redraws the board", async ({ page }) => {
   await seed(page, null);
   await page.setViewportSize(SIZES["ipad landscape"]);
