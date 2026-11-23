@@ -90,6 +90,8 @@
     drag = null;
   }
 
+  // on a small card the crown already says captain, and the title would cut the name off
+  const short = (name: string) => name.replace(/^(Captain|The) /, "");
   let hired = $state("");
   function hire(cls: string) {
     const next = recruit(pack, game, cls);
@@ -119,7 +121,7 @@
 
 {#snippet card(f: Fighter)}
   <span class="figcell"><Figure kind={f.cls} captain={f.captain} /></span>
-  <span class="cellname"><Badge cls={f.cls} />{f.name}</span>
+  <span class="cellname"><Badge cls={f.cls} />{short(f.name)}</span>
   <span class="celllv">lv {f.level}</span>
 {/snippet}
 
@@ -221,7 +223,7 @@
         {#each game.fighters as f (f.id)}
           <button class="who" class:sel={gearF?.id === f.id} aria-pressed={gearF?.id === f.id} aria-label={`${f.name} the ${f.cls}`} onclick={() => { sound.play("tap"); gearFor = f.id; }}>
             <span class="whofig"><Figure kind={f.cls} captain={f.captain} /></span>
-            <small>{f.name}</small>
+            <small>{short(f.name)}</small>
           </button>
         {/each}
       </div>

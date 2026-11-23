@@ -1,7 +1,17 @@
+import { spawn } from "node:child_process";
+import { createServer } from "node:net";
 import { test, expect } from "./fixtures.js";
 import { state } from "./helpers.js";
 
 const ETHOS = "no ads, no lives, no timers, nothing to buy, no accounts, no cookies, nothing sold or shared.";
+const freePort = () =>
+  new Promise((resolve) => {
+    const probe = createServer();
+    probe.listen(0, "127.0.0.1", () => {
+      const { port } = probe.address();
+      probe.close(() => resolve(port));
+    });
+  });
 
 test("the page and the about sheet carry the house ethos, word for word", async ({ page }) => {
   await page.goto("/");
@@ -91,17 +101,29 @@ test("no cookies, and every request stays on this origin", async ({ page, contex
 });
 
 test.describe("offline and updates", () => {
-  test("after one visit the game starts and plays with no network", async ({ page, context }) => {
-    await page.goto("/");
-    await page.waitForFunction(() => navigator.serviceWorker?.controller != null, null, { timeout: 20000 });
-    await context.setOffline(true);
-    await page.reload();
-    await page.locator("#play").click();
-    await page.locator('[data-place="pebble"]').click();
-    await page.locator("#go").click();
-    await page.locator("#moment-ok").click();
-    await expect.poll(async () => (await state(page)).turn).toBe(2);
-    await context.setOffline(false);
+  // the server is really switched off, on a private port. webkit's emulated offline mode fails the
+  // reload inside the automation before the service worker is asked, which would prove nothing
+  test("after one visit the game starts and plays with the server gone", async ({ page }) => {
+    const port = await freePort();
+    const server = spawn(process.execPath, ["scripts/serve.mjs"], { env: { ...process.env, PORT: String(port) }, stdio: "ignore" });
+    const gone = new Promise((resolve) => server.once("exit", resolve));
+    const url = `http://127.0.0.1:${port}/`;
+    try {
+      await expect.poll(() => fetch(url).then((r) => r.ok, () => false), { timeout: 10000 }).toBe(true);
+      await page.goto(url);
+      await page.waitForFunction(() => navigator.serviceWorker?.controller != null, null, { timeout: 20000 });
+      server.kill();
+      await gone;
+      await expect.poll(() => fetch(url).then(() => "up", () => "down")).toBe("down");
+      await page.reload();
+      await page.locator("#play").click();
+      await page.locator('[data-place="pebble"]').click();
+      await page.locator("#go").click();
+      await page.locator("#moment-ok").click();
+      await expect.poll(async () => (await state(page)).turn).toBe(2);
+    } finally {
+      server.kill();
+    }
   });
 
   test("check for update says so when this is the newest", async ({ page }) => {

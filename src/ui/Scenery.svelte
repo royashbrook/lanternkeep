@@ -5,6 +5,7 @@
   const stars = [[90, 120], [240, 60], [380, 170], [520, 70], [690, 130], [840, 50], [980, 150], [1120, 90], [160, 280], [450, 300], [760, 270], [1060, 300], [320, 400], [900, 410], [600, 220]];
   const cloud = "M0 44q2-22 26-22q10-22 38-16q18-20 46-4q26-8 36 16q24 2 24 26q-2 10-14 10H12q-12-2-12-10z";
   const homes = [[210, 742, 1], [262, 750, 0.8], [950, 716, 1.1], [1006, 728, 0.8], [905, 730, 0.75]];
+  const tufts = [[150, 520, 1.2], [90, 760, 1], [240, 900, 1.3], [420, 1010, 1], [760, 1020, 1.2], [980, 900, 1], [1100, 720, 1.3], [1060, 500, 1], [820, 340, 0.9], [360, 350, 1], [600, 300, 0.8], [600, 1060, 1.1]];
 </script>
 
 <svg class="scenery" class:battlebg={variant === "battle"} viewBox="0 0 1200 1200" preserveAspectRatio={variant === "battle" ? "xMidYMid slice" : "xMidYMax slice"} aria-hidden="true">
@@ -16,10 +17,10 @@
     </linearGradient>
   </defs>
   <rect width="1200" height="1200" fill={`url(#sky-${variant})`} />
-  {#each stars as [x, y], i (i)}
-    <path d={`M${x} ${y - 7}l2 5 5 2-5 2-2 5-2-5-5-2 5-2z`} fill="#ffe9ad" opacity={0.45 + (i % 3) * 0.2} />
-  {/each}
   {#if variant === "title"}
+    {#each stars as [x, y], i (i)}
+      <path d={`M${x} ${y - 7}l2 5 5 2-5 2-2 5-2-5-5-2 5-2z`} fill="#ffe9ad" opacity={0.45 + (i % 3) * 0.2} />
+    {/each}
     <circle cx="985" cy="205" r="62" fill="#fff0c4" stroke="#fff6dd" stroke-width="5" />
     <circle cx="1010" cy="190" r="54" fill="#1e2c50" />
     <g fill="#8fa3cf">
@@ -45,5 +46,8 @@
     <path d="M0 420Q300 340 600 400T1200 370V1200H0Z" fill="#2a3c6e" />
     <ellipse cx="600" cy="640" rx="760" ry="470" fill="#34497f" />
     <ellipse cx="600" cy="640" rx="520" ry="320" fill="#3d5590" />
+    {#each tufts as [x, y, s], i (i)}
+      <path d={`M${x - 14 * s} ${y}q${4 * s} ${-16 * s} ${8 * s} ${-22 * s}q${2 * s} ${10 * s} ${6 * s} ${12 * s}q${3 * s} ${-12 * s} ${9 * s} ${-18 * s}q${1 * s} ${14 * s} ${5 * s} ${28 * s}z`} fill="#4f6da6" opacity=".75" />
+    {/each}
   {/if}
 </svg>

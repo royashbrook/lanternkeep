@@ -68,7 +68,7 @@ for (const [name, viewport] of Object.entries(SIZES)) {
       await seed(page, playedTo(999));
       await page.goto("/");
       await page.locator("#play").click();
-      await check(page, "win", ["#again"]);
+      await check(page, "win", ["#again", ".winlanterns span", ".parade span"]);
     });
 
     test("about reaches its last line by scrolling the sheet", async ({ page }) => {
@@ -122,7 +122,7 @@ test("class and state never rely on colour alone", async ({ page }) => {
   // one badge outline per class on the field, so two classes never differ by colour only
   const seen = await page.evaluate(() => [...document.querySelectorAll(".bandcard .cell.full")].map((c) => [c.querySelector(".cellname")?.textContent?.trim(), c.querySelector(".badge path")?.getAttribute("d")]));
   const g = await state(page);
-  const classOf = Object.fromEntries(g.fighters.map((f) => [f.name, f.cls]));
+  const classOf = Object.fromEntries(g.fighters.map((f) => [f.name.replace(/^(Captain|The) /, ""), f.cls]));
   const shapeOf = new Map();
   for (const [name, d] of seen) {
     const cls = classOf[name];
